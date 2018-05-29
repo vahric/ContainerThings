@@ -1,0 +1,37 @@
+
+Actually you can switch second option becuase first option is only for when you want to compilte from source
+
+Option 1 
+
+download tools to compile and get package
+
+sudo yum install kernel-headers golang gcc git -y
+sudo yum install *glibc-static* -y
+
+To clone flannel package (do not execute right now!)
+
+git clone https://github.com/coreos/flannel.git
+
+Compile (Here is little interesting)
+
+export CGO_ENABLED=1
+export GOPATH=$(pwd)
+mkdir -p src/github.com/coreos
+cd src/github.com/coreos
+git clone https://github.com/coreos/flannel.git
+cd flannel/
+make dist/flanneld
+
+Info:
+https://github.com/coreos/flannel/issues/552
+following has worked for me (I don't know go so I apologize if there is better solution). You need to specify GOPATH env variable so go can find packages of dependencies that are located in vendor folder. The trick is that you need to clone flannel project into specific path (src/github.com/coreos) and set GOPATH to the directory where src subdirectory is, see below:
+
+its need to give execute right to executable
+
+
+Option 2 
+
+wget https://github.com/coreos/flannel/releases/download/v0.10.0/flanneld-amd64 -O flanneld
+chmod +x flanneld
+
+easy haa ! 

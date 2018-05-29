@@ -1,0 +1,242 @@
+I will fallow this documents http://docker-k8s-lab.readthedocs.io/en/latest/docker/docker-flannel.html 
+
+In this article we will use udp but for production its not advised , https://github.com/coreos/flannel/blob/master/Documentation/backends.md
+
+We will need to put the flannel configuration to etcd before execute it.
+All config options are available https://coreos.com/flannel/docs/latest/configuration.html 
+
+I will not use configurations like below , i will accepts all defaults and set only mandatory things which is network value
+For each host it will allocate /24 network from network which below and use udp for communication.
+
+{
+	"Network": "10.0.0.0/8",
+}
+
+Add these 3 lines to file like flannel.config file or directly execute it like below directly
+File creation is mostly needed if you will need extra config like manage subnet , ip block bla bla ...
+
+etcdctl set /coreos.com/network/config '{ "Network": "10.1.0.0/8" }'
+
+Now need to set this value inside etcd with key,location of key will be this /coreos.com/network/config
+You can replace the location of key and value like execute etcd with --etcd-prefix xxx
+
+You can also get the key value like below 
+
+etcdctl get /coreos.com/network/config
+{ "Network": "10.1.0.0/8" }
+
+if you want check this config from other nodes to verify that you access this key/value
+
+First time execute you can see that no any subnet assigned and using udp backend 10.0.2.0/24 is assigned  
+
+[root@centostest2 ~]# ./flanneld -iface 10.111.60.71
+I0529 17:44:16.914071    9680 main.go:417] Searching for interface using 10.111.60.71
+I0529 17:44:16.914612    9680 main.go:488] Using interface with name ens192 and address 10.111.60.71
+I0529 17:44:16.914631    9680 main.go:505] Defaulting external address to interface address (10.111.60.71)
+I0529 17:44:16.914786    9680 main.go:235] Created subnet manager: Etcd Local Manager with Previous Subnet: None
+I0529 17:44:16.914802    9680 main.go:238] Installing signal handlers
+I0529 17:44:16.921860    9680 main.go:353] Found network config - Backend type: udp
+I0529 17:44:16.944000    9680 local_manager.go:234] Picking subnet in range 10.0.1.0 ... 10.255.255.0
+I0529 17:44:16.947861    9680 local_manager.go:220] Allocated lease (10.0.2.0/24) to current node (10.111.60.71) 
+I0529 17:44:17.043421    9680 main.go:300] Wrote subnet file to /run/flannel/subnet.env
+I0529 17:44:17.043448    9680 main.go:304] Running backend.
+I0529 17:44:17.048533    9680 udp_network_amd64.go:100] Watching for new subnet leases
+I0529 17:44:17.054647    9680 iptables.go:115] Some iptables rules are missing; deleting and recreating rules
+I0529 17:44:17.054670    9680 iptables.go:137] Deleting iptables rule: -s 10.0.0.0/8 -j ACCEPT
+I0529 17:44:17.055209    9680 main.go:396] Waiting for 22h59m59.889183324s to renew lease
+I0529 17:44:17.057497    9680 iptables.go:137] Deleting iptables rule: -d 10.0.0.0/8 -j ACCEPT
+I0529 17:44:17.060384    9680 iptables.go:125] Adding iptables rule: -s 10.0.0.0/8 -j ACCEPT
+I0529 17:44:17.071211    9680 iptables.go:125] Adding iptables rule: -d 10.0.0.0/8 -j ACCEPT
+
+it is saved to /run/flannel/subnet.env
+
+[root@centostest2 ~]# cat /run/flannel/subnet.env 
+FLANNEL_NETWORK=10.0.0.0/8
+FLANNEL_SUBNET=10.0.2.1/24
+FLANNEL_MTU=1472
+FLANNEL_IPMASQ=false
+
+Check networking there is new interface there  
+Flannel0 is tun/tap interface, its used for raw network traffic IP or Ethernet
+
+7: flannel0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1472 qdisc pfifo_fast state UNKNOWN qlen 500
+    link/none 
+    inet 10.0.2.0/8 scope global flannel0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::9aa6:2586:534c:9067/64 scope link flags 800 
+       valid_lft forever preferred_lft forever
+
+Look at routing table ..
+
+route -n
+
+Kernel IP routing table
+Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+0.0.0.0         10.111.60.1     0.0.0.0         UG    100    0        0 ens192
+10.0.0.0        0.0.0.0         255.0.0.0       U     0      0        0 flannel0
+10.111.60.0     0.0.0.0         255.255.255.0   U     100    0        0 ens192
+172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+
+Lets get additional keys ...
+Now we have additional key which under subners 10.0.2.0-24
+And its have a values Public show that to communicate which IP will be used for transportation(this is VTAP interface)
+
+[root@centostest2 ~]# etcdctl ls /coreos.com/network/subnets
+/coreos.com/network/subnets/10.0.2.0-24
+[root@centostest2 ~]# etcdctl get /coreos.com/network/subnets/10.0.2.0-24
+{"PublicIP":"10.111.60.71"}
+
+
+Execute flanneld on other host , you will get notifications like below
+ 
+[root@centostest2 ~]# I0529 17:57:38.205528    9742 udp_network_amd64.go:189] Subnet added: 10.0.82.0/24
+I0529 17:57:48.195465    9742 udp_network_amd64.go:189] Subnet added: 10.0.82.0/24
+
+Now need to run docker deamon with new ip block/network/subnet what you call and because of this we will use command below 
+Stop your docker service before like systemctl stop docker
+Actually we can update daemon.json file under /etc/docker/ too but its more easy wat , just run from console :D 
+
+dockerd --bip=10.0.2.1/24 --mtu=1472 &
+
+You will see that docker0 attached network will be changed ....
+
+3: docker0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN 
+    link/ether 02:42:06:c5:cf:65 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.82.1/24 brd 10.0.82.255 scope global docker0
+       valid_lft forever preferred_lft forever
+    inet6 fe80::42:6ff:fec5:cf65/64 scope link 
+       valid_lft forever preferred_lft forever
+
+
+Lets inspect bridge network (bridge0) 
+
+docker network inspect bridge
+[
+    {
+        "Name": "bridge",
+        "Id": "92fa9c909cb964beccf84b3d9485c6b82824766c4c3797e07b72417aaba6beb8",
+        "Created": "2018-05-29T18:16:04.189031572+03:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": null,
+            "Config": [
+                {
+                    "Subnet": "10.0.82.1/24",
+                    "Gateway": "10.0.82.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {
+            "com.docker.network.bridge.default_bridge": "true",
+            "com.docker.network.bridge.enable_icc": "true",
+            "com.docker.network.bridge.enable_ip_masquerade": "true",
+            "com.docker.network.bridge.host_binding_ipv4": "0.0.0.0",
+            "com.docker.network.bridge.name": "docker0",
+            "com.docker.network.driver.mtu": "1472"
+        },
+        "Labels": {}
+    }
+]
+
+Lets run to docker images on both docker node
+
+docker container run -d httpd
+
+or
+
+docker run -d httpd (old way)
+
+Get ip addresses from both 
+
+docker exec f9 ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+26: eth0@if27: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1472 qdisc noqueue state UP group default 
+    link/ether 02:42:0a:00:52:03 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.82.3/24 brd 10.0.82.255 scope global eth0
+       valid_lft forever preferred_lft forever
+
+docker exec 55 ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+12: eth0@if13: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1472 qdisc noqueue state UP group default 
+    link/ether 02:42:0a:00:02:02 brd ff:ff:ff:ff:ff:ff
+    inet 10.0.2.2/24 brd 10.0.2.255 scope global eth0
+       valid_lft forever preferred_lft forever
+
+Now lets ping from 10.0.2.2 to 10.0.82.3
+
+docker exec 55 ping 10.0.82.3
+PING 10.0.82.3 (10.0.82.3) 56(84) bytes of data.
+64 bytes from 10.0.82.3: icmp_seq=1 ttl=60 time=1.73 ms
+64 bytes from 10.0.82.3: icmp_seq=2 ttl=60 time=0.394 ms
+64 bytes from 10.0.82.3: icmp_seq=3 ttl=60 time=0.431 ms
+64 bytes from 10.0.82.3: icmp_seq=4 ttl=60 time=0.466 ms
+
+its working ... then when ping continue from other node get the ethernet dump 
+
+You can see the pings 
+
+tcpdump -n -v icmp -i flannel0
+
+You can see the 8285 communication (flannel udp backend port) (vxlan backend dump could show better)
+
+tcpdump -i ens192 port 8285
+tcpdump: verbose output suppressed, use -v or -vv for full protocol decode
+listening on ens192, link-type EN10MB (Ethernet), capture size 262144 bytes
+21:43:14.110002 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:14.110144 IP centostest1.8285 > centostest2.8285: UDP, length 84
+21:43:14.115968 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:14.116072 IP centostest1.8285 > centostest2.8285: UDP, length 84
+21:43:14.290993 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:14.291135 IP centostest1.8285 > centostest2.8285: UDP, length 84
+21:43:14.634035 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:14.634209 IP centostest1.8285 > centostest2.8285: UDP, length 84
+21:43:15.110019 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:15.110169 IP centostest1.8285 > centostest2.8285: UDP, length 84
+21:43:15.115968 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:15.116067 IP centostest1.8285 > centostest2.8285: UDP, length 84
+21:43:15.290980 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:15.291178 IP centostest1.8285 > centostest2.8285: UDP, length 84
+21:43:15.634022 IP centostest2.8285 > centostest1.8285: UDP, length 84
+21:43:15.634245 IP centostest1.8285 > centostest2.8285: UDP, length 84
+
+
+Example different network.json Flannel
+
+{
+    "Network": "10.0.0.0/8",
+    "SubnetLen": 20,
+    "SubnetMin": "10.10.0.0",
+    "SubnetMax": "10.99.0.0",
+    "Backend": {
+        "Type": "vxlan",
+        "VNI": 100,
+        "Port": 8472
+    }
+}
+
+Important
+
+Some of documents talk about iptables FORWARD rule, its important control its accept or drop
+
+Links : 
+
+https://docs.docker.com/v17.09/engine/userguide/networking/default_network/custom-docker0/
+https://coreos.com/flannel/docs/latest/running.html
+https://github.com/coreos/flannel/blob/master/Documentation/backends.md
