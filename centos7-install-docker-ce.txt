@@ -12,6 +12,12 @@ yum install yum-utils -y
 Again its already installed but need to have device-mapper-persistent-data package for 
 yum install device-mapper-persistent-data -y
 
+Orrrr Shortttttt
+yum install -y yum-utils device-mapper-persistent-data lvm2
+
+Link : https://www.slideshare.net/ejlp12/introduction-to-docker-storage-volume-and-image
+Link : https://www.slideshare.net/Docker/docker-for-ops-docker-storage-and-volumes-deep-dive-and-considerations-by-brian-goff
+
 All distro repo files ...
 https://download.docker.com/linux/
 
@@ -20,6 +26,10 @@ yum-config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce
 Not: docker-ce-stable is enabled default if you want to allow edge you can execute yum-config-manager --enable docker-ce-edge
 
 yum install docker-ce -y
+
+or
+
+yum install docker-ce docker-ce-cli containerd.io -y
 
 To install different versions ...
 yum install docker-ce-<version>

@@ -1,0 +1,78 @@
+Lets install kubelet, kubectl , kubeadm
+
+First add Google repo to install ...
+
+cat <<EOF > /etc/yum.repos.d/kubernetes.repo
+[kubernetes]
+name=Kubernetes
+baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
+enabled=1
+gpgcheck=1
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
+EOF
+
+# Update repo ...
+
+yum update -y
+
+# Disable SELinux
+
+setenforce 0 # Runtime
+sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config #Modify config for next reboot
+
+# Install kubelet kubeadm kubectl
+
+yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+
+# Get version
+
+[root@k8sReadyTemplate ~]# kubeadm version
+kubeadm version: &version.Info{Major:"1", Minor:"17", GitVersion:"v1.17.3", GitCommit:"06ad960bfd03b39c8310aaf92d1e7c12ce618213", GitTreeState:"clean", BuildDate:"2020-02-11T18:12:12Z", GoVersion:"go1.13.6", Compiler:"gc", Platform:"linux/amd64"}
+
+# To run kubelet service when node/vm/server boot
+systemctl enable --now kubelet
+
+Not : Until install K8s it will be never up 
+
+-- The start-up result is done.
+Feb 20 13:20:10 k8sReadyTemplate kubelet[1785]: F0220 13:20:10.719080    1785 server.go:198] failed to load Kubelet config file /var/lib/kubelet/config.yaml, error failed to read kubelet 
+Feb 20 13:20:10 k8sReadyTemplate systemd[1]: kubelet.service: main process exited, code=exited, status=255/n/a
+Feb 20 13:20:10 k8sReadyTemplate systemd[1]: Unit kubelet.service entered failed state.
+Feb 20 13:20:10 k8sReadyTemplate systemd[1]: kubelet.service failed.
+
+# To be sure iptables rules are used for bridges
+cat <<EOF > /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-ip6tables = 1
+net.bridge.bridge-nf-call-iptables = 1
+EOF
+
+sysctl --system
+
+Link : https://news.ycombinator.com/item?id=16427686
+
+#Lets control 
+
+[root@k8sReadyTemplate ~]# lsmod | grep br_netfilter
+br_netfilter           22256  0 
+bridge                151336  2 br_netfilter,ebtable_broute
+
+Not : We are installing everything on Centos7 not Centos8 because kubadm do not support nftables for now for this version
+
+We will not set any CRI(Contianer Runtime Interface) kubeadm can detect also cgroup driver also kubeadm can detect 
+
+Dikkat !!
+[WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
+
+One more, when you will start to install K8s need to swap off lets do it right now 
+
+#Lets check the swap device 
+cat /proc/swaps
+
+#Disable all swaps
+swapoff -a
+
+#Disable it from /etc/fstab
+#/dev/mapper/centos-swap swap                    swap    defaults        0 0
+
+Lets reboot and check node/server/vm if everything looks good then we done ! 
