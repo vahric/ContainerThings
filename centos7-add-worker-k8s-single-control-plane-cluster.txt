@@ -1,0 +1,61 @@
+When you first init K8s cluster, you used a token for add workers to K8s cluster and this token have an expire time which is 24 hour.
+We will need additional token to add new worker(s) to the K8s cluster
+Be sure new worker can access master node(s)
+
+On master node try to get token list but generally it will empty because its already expired 
+
+kubeadm token list
+
+Lets create and get the joing commands syntax too
+
+[root@k8snm01 ~]# kubeadm token create --print-join-command
+W0301 21:56:57.059755   28832 validation.go:28] Cannot validate kube-proxy config - no validator is available
+W0301 21:56:57.059847   28832 validation.go:28] Cannot validate kubelet config - no validator is available
+kubeadm join 10.110.55.1:6443 --token 5st214.np4x84tmhbray4jn     --discovery-token-ca-cert-hash sha256:12d61b0ea93c3b9323cafab16f4e748a0557b8ed78749d95866364a4028a21c1
+
+Go to new worker node and execute it 
+
+[root@k8snw03 ~]# kubeadm join 10.110.55.1:6443 --token 5st214.np4x84tmhbray4jn     --discovery-token-ca-cert-hash sha256:12d61b0ea93c3b9323cafab16f4e748a0557b8ed78749d95866364a4028a21c1
+
+W0302 01:02:08.401910    6196 join.go:346] [preflight] WARNING: JoinControlPane.controlPlane settings will be ignored when control-plane flag is not set.
+[preflight] Running pre-flight checks
+	[WARNING IsDockerSystemdCheck]: detected "cgroupfs" as the Docker cgroup driver. The recommended driver is "systemd". Please follow the guide at https://kubernetes.io/docs/setup/cri/
+[preflight] Reading configuration from the cluster...
+[preflight] FYI: You can look at this config file with 'kubectl -n kube-system get cm kubeadm-config -oyaml'
+[kubelet-start] Downloading configuration for the kubelet from the "kubelet-config-1.17" ConfigMap in the kube-system namespace
+[kubelet-start] Writing kubelet configuration to file "/var/lib/kubelet/config.yaml"
+[kubelet-start] Writing kubelet environment file with flags to file "/var/lib/kubelet/kubeadm-flags.env"
+[kubelet-start] Starting the kubelet
+[kubelet-start] Waiting for the kubelet to perform the TLS Bootstrap...
+
+This node has joined the cluster:
+* Certificate signing request was sent to apiserver and a response was received.
+* The Kubelet was informed of the new secure connection details.
+
+Run 'kubectl get nodes' on the control-plane to see this node join the cluster.
+
+Vahrics-MacBook-Pro:~ vahricmuhtaryan$ kubectl get nodes
+NAME      STATUS     ROLES    AGE   VERSION
+k8snm01   Ready      master   10d   v1.17.3
+k8snw01   Ready      <none>   10d   v1.17.3
+k8snw02   Ready      <none>   10d   v1.17.3
+k8snw03   NotReady   <none>   39s   v1.17.3
+
+Wait until its become ready ! 
+
+Vahrics-MacBook-Pro:~ vahricmuhtaryan$ kubectl get nodes
+NAME      STATUS   ROLES    AGE   VERSION
+k8snm01   Ready    master   10d   v1.17.3
+k8snw01   Ready    <none>   10d   v1.17.3
+k8snw02   Ready    <none>   10d   v1.17.3
+k8snw03   Ready    <none>   65s   v1.17.3
+
+Check proxy and flannel or what networking you configuring are running or not !  
+
+[root@k8snw03 ~]# docker ps
+CONTAINER ID        IMAGE                   COMMAND                  CREATED              STATUS              PORTS               NAMES
+1d4ab49d4d88        ff281650a721            "/opt/bin/flanneld -…"   59 seconds ago       Up 58 seconds                           k8s_kube-flannel_kube-flannel-ds-amd64-q5pnz_kube-system_61478539-96f8-422c-af88-f2871eff5979_0
+3660265809d2        k8s.gcr.io/kube-proxy   "/usr/local/bin/kube…"   About a minute ago   Up About a minute                       k8s_kube-proxy_kube-proxy-brhgd_kube-system_efa54eb9-182c-4408-9dfa-b57c777e2011_0
+03d468a2ccb8        k8s.gcr.io/pause:3.1    "/pause"                 About a minute ago   Up About a minute                       k8s_POD_kube-proxy-brhgd_kube-system_efa54eb9-182c-4408-9dfa-b57c777e2011_0
+da24d81b9e2d        k8s.gcr.io/pause:3.1    "/pause"                 About a minute ago   Up About a minute                       k8s_POD_kube-flannel-ds-amd64-q5pnz_kube-system_61478539-96f8-422c-af88-f2871eff5979_0
+

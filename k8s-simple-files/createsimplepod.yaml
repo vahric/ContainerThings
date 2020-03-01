@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: podadi
+  labels:
+    name: Dev
+spec:
+  containers:
+  - name: containeradi
+    image: nginx

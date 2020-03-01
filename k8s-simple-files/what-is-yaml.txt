@@ -1,0 +1,42 @@
+YAML is like a decleration file or human friendly format for structured data. You can use it with K8s, Openstack or with other things ...
+
+Two type of structor it has ; 
+
+Maps
+Lists
+
+Maps are like K/V's ;
+ 
+K8s Example : 
+
+apiVersion: v1
+kind: Pod
+
+v1 and Pod is value , apiVersion and kind is keys 
+
+JSON example of it 
+
+{
+   "apiVersion": "v1",
+   "kind": "Pod"
+}
+
+You can see below multiple maps are there , metadata have map and two keys , labels have map and one key.
+When processor read the file accept that same level things are grouped together. 
+Dont use tabs, use spaces, no important 3 or 2 or 5 but keep it same for same tree
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: name01
+  labels:
+    app: app01
+
+Yaml List : 
+
+args:
+  - 1
+  - 2
+  - 3
+
+maps and list can be used together 

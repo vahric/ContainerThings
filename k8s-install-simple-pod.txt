@@ -1,0 +1,15 @@
+To deploy pod object 
+
+kubectl create -f k8s-simple-files/createsimplepod.yaml
+
+To list created pod objects
+
+kubectl get pods
+
+To get more info from pod
+
+kubectl describe pod podadi
+
+To delete pod object
+
+kubectl delete pod podadi

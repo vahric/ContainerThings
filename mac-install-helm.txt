@@ -1,0 +1,43 @@
+To install Helm(cliet) on MacOS
+
+brew install kubernetes-helm
+
+To start to use Helm, you kube config should be okay, means you can access K8s cluster and can run kubectl commands on it.
+
+Helm is under CNCF wings and company like Bitnami, Microsoft , Google are in collobration with it.
+
+To search charts from public hub use command below 
+This command search app in https://hub.helm.sh
+
+--> helm search hub
+
+or
+
+--> helm search hub wordpress
+URL                                               	CHART VERSION	APP VERSION	DESCRIPTION                                       
+https://hub.helm.sh/charts/bitnami/wordpress      	8.1.3        	5.3.2      	Web publishing platform for building blogs and ...
+https://hub.helm.sh/charts/presslabs/wordpress-...	v0.8.0       	v0.8.0     	A Helm chart for deploying a WordPress site on ...
+https://hub.helm.sh/charts/presslabs/wordpress-...	v0.8.2       	v0.8.2     	Presslabs WordPress Operator Helm Chart 
+
+Helm Commands
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+helm repo list : List repos which is set by helm repo add command
+helm repo update : Get chart updates from repo
+
+helm search hub jenkins : Search app on helm hub https://hub.helm.sh
+helm search repo <repo name> jenkins : Search app on add helm repo https://hub.helm.sh
+
+helm ls : See what installed with helm
+
+helm uninstall harbor : Uninstall artifact harbor
+
+Uninstall do not remove persistent volumes or pending state persisten volumes, fyi
+kubectl get pvc
+NAME                               STATUS    VOLUME   CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+data-harbor-postgresql-0           Pending                                                     41m
+harbor-chartmuseum                 Pending                                                     41m
+harbor-jobservice                  Pending                                                     41m
+harbor-registry                    Pending                                                     41m
+redis-data-harbor-redis-master-0   Pending                                                     41m
