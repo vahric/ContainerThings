@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: testpersistentvolume2
+  labels:
+   storageos.com/replicas: "1"
+spec:
+  storageClassName: storageosdemoclass1
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

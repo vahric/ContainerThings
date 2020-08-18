@@ -1,0 +1,4 @@
+It kind a monitoring for pods to know its alive or ready to get traffic.
+
+Some processes in containers do not return exit code then this cause a problem for K8s.
+

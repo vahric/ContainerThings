@@ -1,0 +1,40 @@
+This article about StorageOS
+
+Two options we have helm and operators 
+
+Looks like recommanded and desired thing is using operators.
+
+Install StorageOS Operator
+
+kubectl create -f https://github.com/storageos/cluster-operator/releases/download/1.5.3/storageos-operator.yaml
+customresourcedefinition.apiextensions.k8s.io/storageosclusters.storageos.com created
+customresourcedefinition.apiextensions.k8s.io/storageosupgrades.storageos.com created
+customresourcedefinition.apiextensions.k8s.io/jobs.storageos.com created
+customresourcedefinition.apiextensions.k8s.io/nfsservers.storageos.com created
+namespace/storageos-operator created
+clusterrole.rbac.authorization.k8s.io/storageos-operator created
+serviceaccount/storageoscluster-operator-sa created
+clusterrolebinding.rbac.authorization.k8s.io/storageoscluster-operator-rolebinding created
+deployment.apps/storageos-cluster-operator created
+
+See custom created resource definations
+
+kubectl get crd
+
+NAME                              CREATED AT
+jobs.storageos.com                2020-03-04T08:00:25Z
+nfsservers.storageos.com          2020-03-04T08:00:25Z
+storageosclusters.storageos.com   2020-03-04T08:00:24Z
+storageosupgrades.storageos.com   2020-03-04T08:00:24Z
+
+See created namespace and controller pod
+
+kubectl get namespace
+sNAME                 STATUS   AGE
+default              Active   10h
+kube-node-lease      Active   10h
+kube-public          Active   10h
+kube-system          Active   10h
+storageos-operator   Active   62s
+
+

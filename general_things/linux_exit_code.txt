@@ -1,0 +1,15 @@
+its a return code for parent process.
+
+POSIX systems standard exit code for success is 0 , instead of success others are between 1-255
+
+Use $? to get it 
+
+Example
+
+touch create-a-file.txt
+echo $?
+0
+
+In scripts when you want to return code you need to set it like below ...
+
+exit 1

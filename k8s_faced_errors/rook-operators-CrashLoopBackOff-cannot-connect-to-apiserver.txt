@@ -1,0 +1,14 @@
+pod_workers.go:191] Error syncing pod
+
+    Last State:     Terminated
+      Reason:       Error
+      Message:      Get https://10.96.0.1:443/api/v1/namespaces/rook-ceph/configmaps/local-device-k8snw03: dial tcp 10.96.0.1:443: connect: no route to host
+
+The route problem can be solved by flush iptables.
+
+systemctl stop kubelet
+systemctl stop docker
+iptables --flush
+iptables -tnat --flush
+systemctl start kubelet
+systemctl start docker

@@ -1,0 +1,121 @@
+Rook is 
+
+Clone Rook ...
+
+git clone --single-branch --branch release-1.2 https://github.com/rook/rook.git
+
+We will deal with 3 yaml files with rook ; its common,operator,cluster yaml files.
+
+To create Custom Resource Definations for rook 
+
+kubectl create -f rook/cluster/examples/kubernetes/ceph/common.yaml
+
+To create Rook Operator
+
+kubectl create -f rook/cluster/examples/kubernetes/ceph/operator.yaml
+
+configmap/rook-ceph-operator-config created
+deployment.apps/rook-ceph-operator created
+
+kubectl get pods -n rook-ceph
+NAME                                  READY   STATUS    RESTARTS   AGE
+rook-ceph-operator-7dcd87699d-jqn9s   1/1     Running   16         135m
+rook-discover-88qcd                   1/1     Running   0          76m
+rook-discover-fkd5k                   1/1     Running   18         76m
+rook-discover-t269x                   1/1     Running   19         76m
+
+On each node, adding single 100 GB disks and will do nothing, expect that each drive will be OSD for ceph ...
+
+I will use cluster.yaml for this no cluster-test nor cluter-minimal yaml files 
+
+Not : Test first all centos nodes could install rbd module with modprobe rbd , to remove it modprove -r rbd
+
+Create Ceph Cluster
+
+kubectl create -f rook/cluster/examples/kubernetes/ceph/cluster.yaml
+
+kubectl get pods -n rook-ceph
+NAME                                            READY   STATUS              RESTARTS   AGE
+csi-cephfsplugin-ckmqx                          0/3     ContainerCreating   0          40s
+csi-cephfsplugin-fgrth                          0/3     ContainerCreating   0          40s
+csi-cephfsplugin-provisioner-7b8fbf88b4-chnf8   0/4     ContainerCreating   0          40s
+csi-cephfsplugin-provisioner-7b8fbf88b4-w4wrh   0/4     ContainerCreating   0          40s
+csi-cephfsplugin-rdpmx                          0/3     ContainerCreating   0          40s
+csi-rbdplugin-m5cw8                             0/3     ContainerCreating   0          40s
+csi-rbdplugin-nkgnp                             0/3     ContainerCreating   0          40s
+csi-rbdplugin-provisioner-6b8b4d558c-7km2l      0/5     ContainerCreating   0          40s
+csi-rbdplugin-provisioner-6b8b4d558c-xr2dr      0/5     ContainerCreating   0          40s
+csi-rbdplugin-wnrw9                             0/3     ContainerCreating   0          40s
+rook-ceph-detect-version-ms7rz                  0/1     PodInitializing     0          34s
+rook-ceph-operator-7dcd87699d-jqn9s             1/1     Running             16         5h6m
+rook-discover-88qcd                             1/1     Running             0          4h8m
+rook-discover-fkd5k                             1/1     Running             18         4h8m
+rook-discover-t269x                             1/1     Running             19         4h8m
+
+get pods -n rook-ceph
+NAME                                            READY   STATUS              RESTARTS   AGE
+csi-cephfsplugin-ckmqx                          3/3     Running             0          74s
+csi-cephfsplugin-fgrth                          3/3     Running             0          74s
+csi-cephfsplugin-provisioner-7b8fbf88b4-chnf8   4/4     Running             0          74s
+csi-cephfsplugin-provisioner-7b8fbf88b4-w4wrh   0/4     ContainerCreating   0          74s
+csi-cephfsplugin-rdpmx                          0/3     ContainerCreating   0          74s
+csi-rbdplugin-m5cw8                             3/3     Running             0          74s
+csi-rbdplugin-nkgnp                             0/3     ContainerCreating   0          74s
+csi-rbdplugin-provisioner-6b8b4d558c-7km2l      5/5     Running             0          74s
+csi-rbdplugin-provisioner-6b8b4d558c-xr2dr      0/5     ContainerCreating   0          74s
+csi-rbdplugin-wnrw9                             3/3     Running             0          74s
+rook-ceph-mon-a-canary-8446dfdfc-k2zb2          0/1     Terminating         0          13s
+rook-ceph-mon-b-canary-9679797f4-r8g48          1/1     Running             0          12s
+rook-ceph-mon-c-canary-7b6cd6dd6c-fv9wq         1/1     Running             0          11s
+rook-ceph-operator-7dcd87699d-jqn9s             1/1     Running             16         5h7m
+rook-discover-88qcd                             1/1     Running             0          4h9m
+rook-discover-fkd5k                             1/1     Running             18         4h9m
+rook-discover-t269x                             1/1     Running             19         4h9m
+
+get pods -n rook-ceph
+NAME                                                READY   STATUS     RESTARTS   AGE
+csi-cephfsplugin-ckmqx                              3/3     Running    0          107s
+csi-cephfsplugin-fgrth                              3/3     Running    0          107s
+csi-cephfsplugin-provisioner-7b8fbf88b4-chnf8       4/4     Running    0          107s
+csi-cephfsplugin-provisioner-7b8fbf88b4-w4wrh       4/4     Running    0          107s
+csi-cephfsplugin-rdpmx                              3/3     Running    0          107s
+csi-rbdplugin-m5cw8                                 3/3     Running    0          107s
+csi-rbdplugin-nkgnp                                 3/3     Running    0          107s
+csi-rbdplugin-provisioner-6b8b4d558c-7km2l          5/5     Running    0          107s
+csi-rbdplugin-provisioner-6b8b4d558c-xr2dr          5/5     Running    0          107s
+csi-rbdplugin-wnrw9                                 3/3     Running    0          107s
+rook-ceph-crashcollector-k8snw01-5c4558674-tfkm6    0/1     Init:0/2   0          12s
+rook-ceph-crashcollector-k8snw02-55d9777b75-jbndj   0/1     Init:0/2   0          3s
+rook-ceph-mon-a-5d9b8ff444-hnp4f                    1/1     Running    0          12s
+rook-ceph-mon-b-6d4d4f9f54-2txld                    0/1     Init:0/2   0          3s
+rook-ceph-operator-7dcd87699d-jqn9s                 1/1     Running    16         5h8m
+rook-discover-88qcd                                 1/1     Running    0          4h9m
+rook-discover-fkd5k                                 1/1     Running    18         4h9m
+rook-discover-t269x                                 1/1     Running    19         4h9m
+
+kubectl get pods -n rook-ceph
+NAME                                                READY   STATUS    RESTARTS   AGE
+csi-cephfsplugin-ckmqx                              3/3     Running   0          2m53s
+csi-cephfsplugin-fgrth                              3/3     Running   0          2m53s
+csi-cephfsplugin-provisioner-7b8fbf88b4-chnf8       4/4     Running   0          2m53s
+csi-cephfsplugin-provisioner-7b8fbf88b4-w4wrh       4/4     Running   0          2m53s
+csi-cephfsplugin-rdpmx                              3/3     Running   0          2m53s
+csi-rbdplugin-m5cw8                                 3/3     Running   0          2m53s
+csi-rbdplugin-nkgnp                                 3/3     Running   0          2m53s
+csi-rbdplugin-provisioner-6b8b4d558c-7km2l          5/5     Running   0          2m53s
+csi-rbdplugin-provisioner-6b8b4d558c-xr2dr          5/5     Running   0          2m53s
+csi-rbdplugin-wnrw9                                 3/3     Running   0          2m53s
+rook-ceph-crashcollector-k8snw01-75c8dbd8d4-v5gnv   1/1     Running   0          31s
+rook-ceph-crashcollector-k8snw02-55d9777b75-jbndj   1/1     Running   0          69s
+rook-ceph-crashcollector-k8snw03-64d6dc5fb8-xfklk   1/1     Running   0          50s
+rook-ceph-mgr-a-686fb865b-zqx2x                     1/1     Running   0          31s
+rook-ceph-mon-a-5d9b8ff444-hnp4f                    1/1     Running   0          78s
+rook-ceph-mon-b-6d4d4f9f54-2txld                    1/1     Running   0          69s
+rook-ceph-mon-c-595b89fdf8-jt65v                    1/1     Running   0          51s
+rook-ceph-operator-7dcd87699d-jqn9s                 1/1     Running   16         5h9m
+rook-discover-88qcd                                 1/1     Running   0          4h10m
+rook-discover-fkd5k                                 1/1     Running   18         4h10m
+rook-discover-t269x                                 1/1     Running   19         4h10m
+
+
+

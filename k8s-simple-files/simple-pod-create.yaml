@@ -1,0 +1,34 @@
+#Object Attribute
+#Describe what api to be used to create pod objects
+#We can see different options like apps/1, extentions/v1beta1 ...
+#To see which api version i have to use for what 
+#https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-apiversion-definition-guide.html 
+
+apiVersion: v1
+
+#Object Attribute
+#Describe object type. its kind a function or class
+
+kind: Pod
+
+#Metadata about object
+#To set name, label it to make relations and annotations whic used for ci/cd or put some info which is not relational
+
+metadata:
+  name: podadi
+  labels:
+    name: Dev
+
+#Desired state of your objects, what looks like your object ...
+spec:
+  containers:
+  - name: containeradi
+    image: nginx
+    # Set needed environment variables for container ...
+    env:
+    -  name: BASE_URL
+       value: "http://www.doruk.net.tr"
+    -  name: CONNECTION_STRING
+       value: "mongodb://localhost:27017"
+
+#After you create this object then its write down to etcd db and controller manager act with using controllers ...

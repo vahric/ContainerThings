@@ -76,7 +76,7 @@ W0220 15:43:08.392582    5956 validation.go:28] Cannot validate kubelet config -
 Before init k8s Cluster ; 
 
 With init we can provide --control-plane-endpoint with ip address, this is for when multiple master node will be, for this article not needed
-With init if we will use flannle we have to specify --pod-network-cidr but this kind of things are depend CNI ( Container Network Interface)
+With init if we will use flannel we have to specify --pod-network-cidr but this kind of things are depend CNI ( Container Network Interface)
 With init --apiserver-advertise-address we can set different interface other then default gw one.
 
 Before init k8s Cluster ;

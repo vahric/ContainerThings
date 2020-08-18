@@ -1,0 +1,10 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: storageosdemoclass1
+provisioner: storageos
+parameters:
+  fsType: ext4
+  pool: default
+  adminSecretNamespace: storageos-operator
+  adminSecretName: storageos-api
